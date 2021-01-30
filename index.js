@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const ejsMate = require('ejs-mate');
 const bcrypt = require('bcrypt');
 const User = require('./models/user');
 const app = express();
@@ -10,7 +11,13 @@ mongoose.connect('mongodb://localhost:27017/authDemo', {
     useUnifiedTopology: true
 });
 
+app.engine('ejs', ejsMate);
 app.set('view engine', 'ejs');
+
+app.use((req, res, next) => {
+    res.locals.title = 'Auth Demo';
+    next();
+})
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -19,7 +26,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-    res.render('register');
+    res.render('register', { title: 'Register' });
 });
 
 app.post('/register', async (req, res) => {
@@ -28,6 +35,20 @@ app.post('/register', async (req, res) => {
     const user = new User({ username, password: hash })
     await user.save();
     res.redirect('/');
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', { title: 'Login' })
+});
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = User.findOne({ username });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (validPassword) {
+        res.redirect('/');
+    }
+    res.redirect('/login')
 });
 
 app.get('/secret', (req, res) => {
