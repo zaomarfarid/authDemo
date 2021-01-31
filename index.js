@@ -57,18 +57,22 @@ app.post('/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
     if (validPassword) {
         req.session.user_id = user._id;
-        res.redirect('/secret');
-    } else {
-        res.redirect('/login')
+        return res.redirect('/secret');
     }
+    res.redirect('/login')
 });
 
 app.get('/secret', (req, res) => {
     if (!req.session.user_id) {
-        res.redirect('/login');
-    } else {
-        res.send('secret');
+        return res.redirect('/login');
     }
+    res.render('secret');
+});
+
+app.post('/logout', (req, res) => {
+    // req.session.user_id = null;
+    req.session.destroy();
+    res.redirect('/login');
 });
 
 app.listen(port, () => {
